@@ -26,10 +26,23 @@ public class PromptGeneration {
     }
 
     public PromptConstructorImpl execute(int num) {
-        String testName = classInfo.getClassName() + separator + methodInfo.methodName + separator
-                + classInfo.methodSigs.get(methodInfo.methodSignature) + separator + num + separator + "Test";
-        String fullTestName = classInfo.getFullClassName() + separator + methodInfo.methodName + separator
-                + classInfo.methodSigs.get(methodInfo.methodSignature) + separator + num + separator + "Test";
+        String linePart = (methodInfo.targetLine == null)
+                ? ""
+                : separator + "L" + methodInfo.targetLine;
+
+        String testName = classInfo.getClassName()
+                + separator + methodInfo.methodName
+                + separator + classInfo.methodSigs.get(methodInfo.methodSignature)
+                + linePart
+                + separator + num
+                + separator + "Test";
+
+        String fullTestName = classInfo.getFullClassName()
+                + separator + methodInfo.methodName
+                + separator + classInfo.methodSigs.get(methodInfo.methodSignature)
+                + linePart
+                + separator + num
+                + separator + "Test";
         config.getLogger().info(String.format("\n==========================\n[%s] Generating test for method < ",
                 config.pluginSign) + methodInfo.methodName + " > number " + num + "...\n");
 
@@ -43,6 +56,10 @@ public class PromptGeneration {
             pc.setTestName(testName);
 
             PromptInfo promptInfo = pc.getPromptInfo();
+            if (methodInfo.targetLine != null) {
+                String ctx = promptInfo.getContext();
+                promptInfo.setContext(injectTargetLineNumber(ctx, methodInfo));
+            }
             promptInfo.setFullTestName(fullTestName);
             Path savePath = config.getTestOutput().resolve(fullTestName.replace(".", File.separator) + ".java");
             promptInfo.setTestPath(savePath);
@@ -54,5 +71,43 @@ public class PromptGeneration {
         } catch (IOException e) {
             throw new RuntimeException("In PromptGeneration.execute: " + e);
         }
+    }
+
+    private String injectTargetLineNumber(String context, MethodInfo methodInfo) {
+        if (methodInfo.targetLine == null) {
+            return context;
+        }
+
+        String[] lines = context.split("\n", -1);
+
+        int targetLine = methodInfo.targetLine;
+        int digits = String.valueOf(targetLine).length();
+
+        // fixed-width gutter
+        String blankGutter = new String(new char[digits]).replace('\0', ' ') + "   ";
+        String targetGutter = targetLine + " : ";
+
+        // add gutter to every line
+        for (int i = 0; i < lines.length; i++) {
+            lines[i] = blankGutter + lines[i];
+        }
+
+        // IMPORTANT: this index must already be correct logically
+        int targetIndex = -1;
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].contains(methodInfo.methodName + "(")) {
+                // method declaration found
+                int relative = methodInfo.targetLine - methodInfo.startLine;
+                targetIndex = i + relative;
+                break;
+            }
+        }
+
+        if (targetIndex >= 0 && targetIndex < lines.length) {
+            lines[targetIndex] =
+                    targetGutter + lines[targetIndex].substring(blankGutter.length());
+        }
+
+        return String.join("\n", lines);
     }
 }

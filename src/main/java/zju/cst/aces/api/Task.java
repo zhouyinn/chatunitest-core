@@ -28,6 +28,7 @@ public class Task {
     Logger log;
     Runner runner;
     public enum Granularity {
+        LINE,
         METHOD,
         CLASS,
         PROJECT;
@@ -40,6 +41,70 @@ public class Task {
         this.log = config.getLogger();
         this.runner = runner;
         this.classNameProcessor=new ClassNameProcessor();
+    }
+
+    public void startLineTask(String className, String methodName, int lineNumber) throws IOException {
+        if (granularity == null) {
+            granularity = Granularity.LINE;
+        }
+
+        try {
+            checkTargetFolder(config.getProject());
+        } catch (RuntimeException e) {
+            log.error(e.toString());
+            return;
+        }
+
+        if (config.getProject().getPackaging().equals("pom")) {
+            log.info(String.format(
+                    "\n==========================\n[%s] Skip pom-packaging ...",
+                    config.pluginSign));
+            return;
+        }
+
+        Phase phase = PhaseImpl.createPhase(config);
+        phase.prepare();
+
+        log.info(String.format(
+                "\n==========================\n[%s] Generating tests for class: < %s > method: < %s > line: < %d > ...",
+                config.pluginSign, className, methodName, lineNumber));
+
+        try {
+            String fullClassName = getFullClassName(config, className);
+            ClassInfo classInfo = AbstractRunner.getClassInfo(config, fullClassName);
+            MethodInfo methodInfo = null;
+
+            if (methodName.matches("\\d+")) {
+                for (String mSig : classInfo.methodSigs.keySet()) {
+                    if (classInfo.methodSigs.get(mSig).equals(methodName)) {
+                        methodInfo = AbstractRunner.getMethodInfo(config, classInfo, mSig);
+                        break;
+                    }
+                }
+            } else {
+                for (String mSig : classInfo.methodSigs.keySet()) {
+                    if (mSig.split("\\(")[0].equals(methodName)) {
+                        methodInfo = AbstractRunner.getMethodInfo(config, classInfo, mSig);
+                        break;
+                    }
+                }
+            }
+
+            if (methodInfo == null) {
+                throw new IOException("Method(Line) " + methodName +
+                        " in class " + fullClassName + " not found");
+            }
+            methodInfo.targetLine = lineNumber;
+            this.runner.runLine(fullClassName, methodInfo);
+
+        } catch (IOException e) {
+            log.warn("Method(Line) not found: " + methodName +
+                    " in " + className + " " +
+                    config.getProject().getArtifactId());
+            return;
+        }
+
+        classNameProcessor.processJavaFiles(config.getTestOutput());
     }
 
     public void startMethodTask(String className, String methodName) throws IOException {

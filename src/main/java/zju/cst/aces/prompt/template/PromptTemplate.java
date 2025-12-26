@@ -101,6 +101,26 @@ public class PromptTemplate {
                 matches.remove(matches.size()-1);
             }
         } while (AbstractRunner.isExceedMaxTokens(this.maxPromptTokens, generatedText) && matches.size()>0);
+        /* ================= DEBUG START ================= */
+        System.err.println("\n========== [DEBUG FINAL RENDER RESULT] ==========");
+        System.err.println("[DEBUG template file] = " + templateFileName);
+        System.err.println("[DEBUG final generatedText]");
+        System.err.println(generatedText);
+        System.err.println("-------------------------------------------------");
+        System.err.println("[DEBUG dataModel target_line] = '" + dataModel.get("target_line") + "'");
+        System.err.println("[DEBUG dataModel keys snapshot]");
+        for (Map.Entry<String, Object> e : dataModel.entrySet()) {
+            Object v = e.getValue();
+            System.err.println(
+                    "  - " + e.getKey() + " => " +
+                            (v == null ? "null" :
+                                    v instanceof String ? ("String(len=" + ((String) v).length() + ")") :
+                                            v.getClass().getSimpleName())
+            );
+        }
+        System.err.println("========== [DEBUG END] ==========\n");
+        /* ================= DEBUG END ================= */
+
         return generatedText;
     }
 
@@ -132,6 +152,7 @@ public class PromptTemplate {
         this.dataModel.put("full_class_name",promptInfo.getFullClassName());
         this.dataModel.put("method_sig", promptInfo.getMethodSignature());
         this.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);
+        this.dataModel.put("target_line", promptInfo.getMethodInfo().targetLine);
         this.dataModel.put("class_name", promptInfo.getClassName());
         this.dataModel.put("class_sig", promptInfo.getClassInfo().classSignature);
         this.dataModel.put("package", promptInfo.getClassInfo().packageName);

@@ -25,6 +25,9 @@ public class MethodInfo {
     public String method_comment;
     public String method_annotation;
 
+    public Integer startLine;
+    public Integer targetLine; // null = no line constraint (method-level execution)
+
     public MethodInfo(String className, String methodName, String brief, String methodSignature,
                       String sourceCode, List<String> parameters, Map<String, Set<String>> dependentMethods,String full_method_info,String method_comment,String method_annotation ){
         this.className = className;
@@ -37,6 +40,10 @@ public class MethodInfo {
         this.full_method_info=full_method_info;
         this.method_comment=method_comment;
         this.method_annotation=method_annotation;
+
+        // default: no line constraint
+        this.startLine=null;
+        this.targetLine = null;
     }
 
 

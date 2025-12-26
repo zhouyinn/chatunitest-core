@@ -351,6 +351,10 @@ public class ClassParser {
                 getMethodComment(node),
                 getMethodAnnotation(node)
         );
+
+        if (node.getRange().isPresent()) {
+            mi.startLine = node.getRange().get().begin.line;
+        }
         mi.setUseField(useField(node));
         mi.setConstructor(node.isConstructorDeclaration());
         mi.setGetSet(isGetSet2(node));

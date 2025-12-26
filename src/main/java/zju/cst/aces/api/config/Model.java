@@ -53,10 +53,10 @@ public enum Model {
             .withPresencePenalty(0)
             .build()),
     // 添加更多模型
-    CODE_QWEN("codeqwen:v1.5-chat", new ModelConfig.Builder()
-            .withModelName("codeqwen:v1.5-chat")
-            .withUrl(null)
-            .withContextLength(16385)
+    QWEN2_5_14B_INSTRUCT("Qwen/Qwen2.5-14B-Instruct", new ModelConfig.Builder()
+            .withModelName("Qwen/Qwen2.5-14B-Instruct")
+            .withUrl("http://127.0.0.1:8000/v1/chat/completions")
+            .withContextLength(8192)
             .withTemperature(0.5)
             .withFrequencyPenalty(0)
             .withPresencePenalty(0)

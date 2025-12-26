@@ -34,6 +34,14 @@ public class RunnerImpl implements Runner {
         }
     }
 
+    public void runLine(String fullClassName, MethodInfo methodInfo) {
+        try {
+            selectRunner(config.getPhaseType(), fullClassName, methodInfo);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void selectRunner(String phaseType, String fullClassName, MethodInfo methodInfo) throws IOException {
         // Map templateName to a specific PromptFile enum constant
         switch (phaseType) {

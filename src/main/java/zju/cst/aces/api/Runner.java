@@ -7,4 +7,6 @@ public interface Runner {
     public void runClass(String fullClassName);
 
     public void runMethod(String fullClassName, MethodInfo methodInfo);
+
+    public void runLine(String fullClassName, MethodInfo methodInfo);
 }
