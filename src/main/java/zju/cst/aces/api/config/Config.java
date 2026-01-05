@@ -104,6 +104,8 @@ public class Config {
     public boolean useExtra;
     public boolean enablePrune;
 
+    public static final int LLM_TIMEOUT_MINUTES = 30;
+
     @Getter
     @Setter
     public static class ConfigBuilder {
@@ -155,9 +157,10 @@ public class Config {
         public String hostname = "null";
         public String port = "-1";
         public OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(5, TimeUnit.MINUTES)
-                .writeTimeout(5, TimeUnit.MINUTES)
-                .readTimeout(5, TimeUnit.MINUTES)
+                .connectTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                .writeTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                .readTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                .callTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
                 .build();
         public int max_coverage_improve_time=maxRounds;
         public int sampleSize = 10;
@@ -562,18 +565,20 @@ public class Config {
 
         public void setClinet() {
             this.client = new OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.MINUTES)
-                    .writeTimeout(5, TimeUnit.MINUTES)
-                    .readTimeout(5, TimeUnit.MINUTES)
+                    .connectTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                    .writeTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                    .readTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                    .callTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
                     .build();
         }
 
         public void setClinetwithProxy() {
             Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(this.hostname, Integer.parseInt(this.port)));
             this.client = new OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.MINUTES)
-                    .writeTimeout(5, TimeUnit.MINUTES)
-                    .readTimeout(5, TimeUnit.MINUTES)
+                    .connectTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                    .writeTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                    .readTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
+                    .callTimeout(LLM_TIMEOUT_MINUTES, TimeUnit.MINUTES)
                     .proxy(proxy)
                     .build();
         }
