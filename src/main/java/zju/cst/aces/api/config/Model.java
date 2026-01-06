@@ -55,7 +55,7 @@ public enum Model {
     // 添加更多模型
     QWEN2_5_14B_INSTRUCT("Qwen/Qwen2.5-14B-Instruct", new ModelConfig.Builder()
             .withModelName("Qwen/Qwen2.5-14B-Instruct")
-            .withUrl("http://127.0.0.1:8000/v1")
+            .withUrl("http://127.0.0.1:8000/v1/chat/completions")
             .withContextLength(8192)
             .withTemperature(0.5)
             .withFrequencyPenalty(0)
