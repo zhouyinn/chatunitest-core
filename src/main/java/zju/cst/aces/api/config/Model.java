@@ -53,14 +53,23 @@ public enum Model {
             .withPresencePenalty(0)
             .build()),
     // 添加更多模型
+    QWEN3_14B_INSTRUCT("OpenPipe/Qwen3-14B-Instruct", new ModelConfig.Builder()
+            .withModelName("OpenPipe/Qwen3-14B-Instruct")
+            .withUrl("http://127.0.0.1:8000/v1/chat/completions")
+            .withContextLength(122880)
+            .withTemperature(0.5)
+            .withFrequencyPenalty(0)
+            .withPresencePenalty(0)
+            .build()),
     QWEN2_5_14B_INSTRUCT("Qwen/Qwen2.5-14B-Instruct", new ModelConfig.Builder()
             .withModelName("Qwen/Qwen2.5-14B-Instruct")
             .withUrl("http://127.0.0.1:8000/v1/chat/completions")
-            .withContextLength(8192)
+            .withContextLength(32768)
             .withTemperature(0.5)
             .withFrequencyPenalty(0)
             .withPresencePenalty(0)
             .build());
+    
 
     private final String modelName;
     private final ModelConfig defaultConfig;

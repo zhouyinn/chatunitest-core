@@ -43,7 +43,12 @@ public class Task {
         this.classNameProcessor=new ClassNameProcessor();
     }
 
-    public void startLineTask(String className, String methodName, int lineNumber) throws IOException {
+    public void startLineWithoutOverloadTask(
+            String className,
+            String methodName,
+            String signature,
+            int lineNumber) throws IOException {
+
         if (granularity == null) {
             granularity = Granularity.LINE;
         }
@@ -66,41 +71,46 @@ public class Task {
         phase.prepare();
 
         log.info(String.format(
-                "\n==========================\n[%s] Generating tests for class: < %s > method: < %s > line: < %d > ...",
-                config.pluginSign, className, methodName, lineNumber));
+                "\n==========================\n[%s] Generating tests for class: < %s > method signature: < %s > line: < %d > ...",
+                config.pluginSign, className, signature, lineNumber));
 
         try {
             String fullClassName = getFullClassName(config, className);
             ClassInfo classInfo = AbstractRunner.getClassInfo(config, fullClassName);
             MethodInfo methodInfo = null;
 
-            if (methodName.matches("\\d+")) {
-                for (String mSig : classInfo.methodSigs.keySet()) {
-                    if (classInfo.methodSigs.get(mSig).equals(methodName)) {
-                        methodInfo = AbstractRunner.getMethodInfo(config, classInfo, mSig);
-                        break;
-                    }
+            for (String mSig : classInfo.methodSigs.keySet()) {
+                // quick name pre-filter from mSig
+                if (!mSig.split("\\(")[0].equals(methodName)) {
+                    continue;
                 }
-            } else {
-                for (String mSig : classInfo.methodSigs.keySet()) {
-                    if (mSig.split("\\(")[0].equals(methodName)) {
-                        methodInfo = AbstractRunner.getMethodInfo(config, classInfo, mSig);
-                        break;
-                    }
+
+                MethodInfo tmp = AbstractRunner.getMethodInfo(config, classInfo, mSig);
+                if (tmp == null) {
+                    continue;
+                }
+
+                // exact signature match (overload-safe)
+                if (tmp.methodSignature.equals(signature)) {
+                    methodInfo = tmp;
+                    break;
                 }
             }
 
             if (methodInfo == null) {
-                throw new IOException("Method(Line) " + methodName +
-                        " in class " + fullClassName + " not found");
+                throw new IOException(
+                        "Method(Line) " + signature +
+                                " in class " + fullClassName + " not found"
+                );
             }
+
             methodInfo.targetLine = lineNumber;
-            this.runner.runLine(fullClassName, methodInfo);
+            runner.runLine(fullClassName, methodInfo);
 
         } catch (IOException e) {
-            log.warn("Method(Line) not found: " + methodName +
-                    " in " + className + " " +
-                    config.getProject().getArtifactId());
+            log.warn("Failed to locate target line: method signature " + signature +
+                    " not found in class " + className +
+                    " [" + config.getProject().getArtifactId() + "]");
             return;
         }
 
@@ -182,10 +192,10 @@ public class Task {
      *
      * @param className The name of the class
      * @param methodName The name of the method
-     * @param paramTypes String representing the full method signature to match with methodInfo.methodSignature
+     * @param signature String representing the full method signature to match with methodInfo.methodSignature
      * @throws IOException If an I/O error occurs
      */
-    public void startMethodWithoutOverloadTask(String className, String methodName, String paramTypes) throws IOException {
+    public void startMethodWithoutOverloadTask(String className, String methodName, String signature) throws IOException {
         if(granularity == null){
             granularity = Granularity.METHOD;
         }
@@ -204,7 +214,7 @@ public class Task {
         phase.prepare();
 
         log.info(String.format("\n==========================\n[%s] Generating tests for class: < ",config.pluginSign) + className
-                + "> method with signature: < " + paramTypes + " > ...");
+                + "> method with signature: < " + signature + " > ...");
 
         try {
             String fullClassName = getFullClassName(config, className);
@@ -242,13 +252,13 @@ public class Task {
                         String methodSignature = tempMethodInfo.methodSignature;
 
                         // Directly compare the method signature with the provided parameter string
-                        if (methodSignature.equals(paramTypes)) {
+                        if (methodSignature.equals(signature)) {
                             methodInfo = tempMethodInfo;
                             methodFound = true;
                             try {
                                 this.runner.runMethod(fullClassName, methodInfo);
                             } catch (Exception e) {
-                                log.error("Error when generating tests for method with signature " + paramTypes +
+                                log.error("Error when generating tests for method with signature " + signature +
                                          " in " + className + " " + config.getProject().getArtifactId() + "\n" + e.getMessage());
                             }
                             break;
@@ -257,13 +267,13 @@ public class Task {
                 }
 
                 if (!methodFound) {
-                    throw new IOException("Method with signature " + paramTypes +
+                    throw new IOException("Method with signature " + signature +
                                          " in class " + fullClassName + " not found");
                 }
             }
 
         } catch (IOException e) {
-            log.warn("Method not found with signature: " + paramTypes +
+            log.warn("Method not found with signature: " + signature +
                      " in " + className + " " + config.getProject().getArtifactId());
             return;
         }
