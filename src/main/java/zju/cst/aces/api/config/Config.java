@@ -483,12 +483,7 @@ public class Config {
                 this.testOutput = project.getBasedir().toPath().resolve("chatunitest-tests");
             } else {
                 this.testOutput = testOutput;
-                Project parent = project.getParent();
-                while(parent != null && parent.getBasedir() != null) {
-                    this.testOutput = this.testOutput.resolve(parent.getArtifactId());
-                    parent = parent.getParent();
-                }
-                this.testOutput = this.testOutput.resolve(project.getArtifactId());
+                this.testOutput = this.testOutput.resolve("chatunitest-tests");
             }
             return this;
         }
