@@ -83,8 +83,11 @@ public class PromptGeneration {
         int targetLine = methodInfo.targetLine;
         int digits = String.valueOf(targetLine).length();
 
-        // fixed-width gutter
-        String blankGutter = new String(new char[digits]).replace('\0', ' ') + "   ";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < digits; i++) {
+            sb.append(' ');
+        }
+        String blankGutter = sb.toString() + "   ";
         String targetGutter = targetLine + " : ";
 
         // add gutter to every line
@@ -92,16 +95,37 @@ public class PromptGeneration {
             lines[i] = blankGutter + lines[i];
         }
 
-        // IMPORTANT: this index must already be correct logically
-        int targetIndex = -1;
+        // find method declaration line (skip annotations like @Override)
+        int declIndex = -1;
         for (int i = 0; i < lines.length; i++) {
             if (lines[i].contains(methodInfo.methodName + "(")) {
-                // method declaration found
-                int relative = methodInfo.targetLine - methodInfo.startLine;
-                targetIndex = i + relative;
+                declIndex = i;
                 break;
             }
         }
+
+        if (declIndex == -1) {
+            return String.join("\n", lines);
+        }
+
+        // compute relative offset
+        int relative = methodInfo.targetLine - methodInfo.startLine;
+
+        // adjust for leading annotations in sourceCode
+        if (methodInfo.sourceCode != null) {
+            String[] srcLines = methodInfo.sourceCode.split("\n");
+            int annotationCount = 0;
+            for (String l : srcLines) {
+                if (l.trim().startsWith("@")) {
+                    annotationCount++;
+                } else {
+                    break;
+                }
+            }
+            relative -= annotationCount;
+        }
+
+        int targetIndex = declIndex + relative;
 
         if (targetIndex >= 0 && targetIndex < lines.length) {
             lines[targetIndex] =

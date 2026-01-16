@@ -104,7 +104,6 @@ public class Task {
                                 " in class " + fullClassName + " not found"
                 );
             }
-
             methodInfo.targetLine = lineNumber;
             runner.runLine(fullClassName, methodInfo);
 
