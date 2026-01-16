@@ -91,7 +91,8 @@ public class Task {
                 }
 
                 // exact signature match (overload-safe)
-                if (tmp.methodSignature.equals(signature)) {
+                if (tmp.methodSignature.replaceAll("\\s+", "")
+                        .equals(signature.replaceAll("\\s+", ""))) {
                     methodInfo = tmp;
                     break;
                 }
@@ -252,14 +253,15 @@ public class Task {
                         String methodSignature = tempMethodInfo.methodSignature;
 
                         // Directly compare the method signature with the provided parameter string
-                        if (methodSignature.equals(signature)) {
+                        if (methodSignature.replaceAll("\\s+", "")
+                                .equals(signature.replaceAll("\\s+", ""))) {
                             methodInfo = tempMethodInfo;
                             methodFound = true;
                             try {
                                 this.runner.runMethod(fullClassName, methodInfo);
                             } catch (Exception e) {
                                 log.error("Error when generating tests for method with signature " + signature +
-                                         " in " + className + " " + config.getProject().getArtifactId() + "\n" + e.getMessage());
+                                        " in " + className + " " + config.getProject().getArtifactId() + "\n" + e.getMessage());
                             }
                             break;
                         }
