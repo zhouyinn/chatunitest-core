@@ -152,7 +152,10 @@ public class PromptTemplate {
         this.dataModel.put("full_class_name",promptInfo.getFullClassName());
         this.dataModel.put("method_sig", promptInfo.getMethodSignature());
         this.dataModel.put("method_body", promptInfo.getMethodInfo().sourceCode);
-        this.dataModel.put("target_line", promptInfo.getMethodInfo().targetLine);
+        this.dataModel.put(
+                "target_line",
+                String.valueOf(promptInfo.getMethodInfo().targetLine)
+        );
         this.dataModel.put("class_name", promptInfo.getClassName());
         this.dataModel.put("class_sig", promptInfo.getClassInfo().classSignature);
         this.dataModel.put("package", promptInfo.getClassInfo().packageName);
