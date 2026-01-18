@@ -220,6 +220,7 @@ public class PromptTemplate {
         this.dataModel.put("c_deps", cdep_temp);
         this.dataModel.put("m_deps", mdep_temp);
         this.dataModel.put("full_fm", promptInfo.getContext());
+        this.dataModel.put("full_fm_with_target_line", promptInfo.getContextWithTargetLine()); // full focal method with exactly one target line annotated
 
 
     }

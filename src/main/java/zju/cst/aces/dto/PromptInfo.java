@@ -16,6 +16,7 @@ public class PromptInfo {
     public String methodName;
     public String methodSignature;
     public String context; // context with only focal method.
+    public String contextWithTargetLine;
     public String otherMethodBrief;
     public String otherMethodBodies;
     public Map<String, String> constructorDeps = new HashMap<>(); // dependent classes in constructor.
