@@ -27,6 +27,7 @@ public class MethodInfo {
 
     public Integer startLine;
     public Integer targetLine; // null = no line constraint (method-level execution)
+    public String constraintDesc; // optional natural-language constraint for target line
 
     public MethodInfo(String className, String methodName, String brief, String methodSignature,
                       String sourceCode, List<String> parameters, Map<String, Set<String>> dependentMethods,String full_method_info,String method_comment,String method_annotation ){

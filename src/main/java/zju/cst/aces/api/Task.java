@@ -47,7 +47,8 @@ public class Task {
             String className,
             String methodName,
             String signature,
-            int lineNumber) throws IOException {
+            int lineNumber,
+            String constraintDesc) throws IOException {
 
         if (granularity == null) {
             granularity = Granularity.LINE;
@@ -105,6 +106,7 @@ public class Task {
                 );
             }
             methodInfo.targetLine = lineNumber;
+            methodInfo.constraintDesc = constraintDesc;
             runner.runLine(fullClassName, methodInfo);
 
         } catch (IOException e) {
