@@ -53,12 +53,7 @@ public class TestCompiler {
     public String code;
 
     public TestCompiler(Path testOutputPath, Path compileOutputPath, Path targetPath, List<String> classpathElements) {
-        this.code = "";
-        this.testOutputFolder = testOutputPath.toFile();
-        this.buildFolder = compileOutputPath.toFile();
-        this.buildBackupFolder = targetPath.resolve("test-classes-backup").toFile();
-        this.targetTestsFolder = targetPath.resolve("test-classes").toFile();
-        this.classpathElements = classpathElements;
+        this("", testOutputPath, compileOutputPath, targetPath, classpathElements);
     }
     public TestCompiler(String code, Path testOutputPath, Path compileOutputPath, Path targetPath, List<String> classpathElements) {
         this.code = code;
@@ -67,6 +62,7 @@ public class TestCompiler {
         this.buildBackupFolder = targetPath.resolve("test-classes-backup").toFile();
         this.targetTestsFolder = targetPath.resolve("test-classes").toFile();
         this.classpathElements = classpathElements;
+        ensureBuildFolder();
     }
 
     public TestExecutionSummary executeTest(String fullTestName) {
@@ -124,9 +120,7 @@ public class TestCompiler {
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
                 outputPath.toAbsolutePath().getParent().toFile().mkdirs();
             }
-            if (!buildFolder.exists() && !buildFolder.mkdirs()) {
-                throw new IllegalStateException("Cannot create build directory: " + buildFolder.getAbsolutePath());
-            }
+            
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
             StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 
@@ -264,6 +258,12 @@ public class TestCompiler {
             } catch (IOException e) {
                 throw new RuntimeException("In TestCompiler.restoreTestFolder: " + e);
             }
+        }
+    }
+
+    private void ensureBuildFolder() {
+        if (!buildFolder.exists() && !buildFolder.mkdirs()) {
+            throw new IllegalStateException("Cannot create build directory: " + buildFolder.getAbsolutePath());
         }
     }
 }
