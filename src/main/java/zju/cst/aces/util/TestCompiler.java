@@ -124,8 +124,8 @@ public class TestCompiler {
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
                 outputPath.toAbsolutePath().getParent().toFile().mkdirs();
             }
-            if(!buildFolder.exists()){
-                buildFolder.mkdir();
+            if (!buildFolder.exists() && !buildFolder.mkdirs()) {
+                throw new IllegalStateException("Cannot create build directory: " + buildFolder.getAbsolutePath());
             }
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
             StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
