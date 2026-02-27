@@ -197,12 +197,6 @@ public class Config {
                 this.minErrorTokens = 512;
             }
 
-            Project parent = project.getParent();
-            while(parent != null && parent.getBasedir() != null) {
-                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
-                parent = parent.getParent();
-            }
-            this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
             this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
