@@ -48,7 +48,7 @@ public class Task {
             String methodName,
             String signature,
             int lineNumber,
-            String constraintDesc) throws IOException {
+            String constraintFilePath) throws IOException {
 
         if (granularity == null) {
             granularity = Granularity.LINE;
@@ -106,6 +106,9 @@ public class Task {
                 );
             }
             methodInfo.targetLine = lineNumber;
+            File constraintFile = new File(constraintFilePath);
+            byte[] bytes = Files.readAllBytes(constraintFile.toPath());
+            String constraintDesc = new String(bytes, StandardCharsets.UTF_8);
             methodInfo.constraintDesc = constraintDesc;
             runner.runLine(fullClassName, methodInfo);
 
