@@ -57,8 +57,8 @@ public class PromptGeneration {
 
             PromptInfo promptInfo = pc.getPromptInfo();
             if (methodInfo.targetLine != null) {
-                String ctx = promptInfo.getContext();
-                promptInfo.setContextWithTargetLine(injectTargetLineNumber(ctx, methodInfo));
+                promptInfo.setContextWithTargetLine(injectTargetLineNumber(promptInfo.getContext(), methodInfo));
+                methodInfo.sourceCodeWithTargetLine = injectTargetLineNumber(methodInfo.getSourceCode(), methodInfo);
             }
             promptInfo.setFullTestName(fullTestName);
             Path savePath = config.getTestOutput().resolve(fullTestName.replace(".", File.separator) + ".java");

@@ -13,6 +13,7 @@ public class MethodInfo {
     public String brief;
     public String methodSignature;
     public String sourceCode;
+    public String sourceCodeWithTargetLine;
     public boolean useField;
     public boolean isConstructor;
     public boolean isGetSet;
