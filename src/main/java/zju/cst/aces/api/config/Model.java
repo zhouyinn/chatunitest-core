@@ -44,6 +44,14 @@ public enum Model {
             .withFrequencyPenalty(0)
             .withPresencePenalty(0)
             .build()),
+    GPT_5_4("gpt-5.4", new ModelConfig.Builder()
+            .withModelName("gpt-5.4")
+            .withUrl("https://api.gptsapi.net/v1/chat/completions")
+            .withContextLength(122880) //120k
+            .withTemperature(0.5)
+            .withFrequencyPenalty(0)
+            .withPresencePenalty(0)
+            .build()),
     CODE_LLAMA("code-llama", new ModelConfig.Builder()
             .withModelName("code-llama")
             .withUrl(null)
