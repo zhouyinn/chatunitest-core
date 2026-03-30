@@ -10,6 +10,8 @@ public class ModelConfig {
     public double temperature;
     public int frequencyPenalty;
     public int presencePenalty;
+    /** API type: "CHAT_COMPLETIONS", "RESPONSES", or "CLAUDE" */
+    public String apiType;
 
     private ModelConfig(Builder builder) {
         this.modelName = builder.modelName;
@@ -18,6 +20,7 @@ public class ModelConfig {
         this.temperature = builder.temperature;
         this.frequencyPenalty = builder.frequencyPenalty;
         this.presencePenalty = builder.presencePenalty;
+        this.apiType = builder.apiType;
     }
 
     public static class Builder {
@@ -27,6 +30,7 @@ public class ModelConfig {
         private double temperature = 0.5;
         private int frequencyPenalty = 0;
         private int presencePenalty = 0;
+        private String apiType = "CHAT_COMPLETIONS";
 
         public Builder withModelName(String modelName) {
             this.modelName = modelName;
@@ -55,6 +59,11 @@ public class ModelConfig {
 
         public Builder withTemperature(double temperature) {
             this.temperature = temperature;
+            return this;
+        }
+
+        public Builder withApiType(String apiType) {
+            this.apiType = apiType;
             return this;
         }
 

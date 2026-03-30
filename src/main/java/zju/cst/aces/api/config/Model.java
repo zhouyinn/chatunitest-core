@@ -22,35 +22,60 @@ public enum Model {
             .build()),
     GPT_4O("gpt-4o", new ModelConfig.Builder()
             .withModelName("gpt-4o")
-            .withUrl("https://api.gptsapi.net/v1/chat/completions")
+            .withUrl("https://api.openai.com/v1/responses")
             .withContextLength(122880) //120k
             .withTemperature(0.5)
             .withFrequencyPenalty(0)
             .withPresencePenalty(0)
+            .withApiType("RESPONSES")
             .build()),
     GPT_4O_MINI("gpt-4o-mini", new ModelConfig.Builder()
             .withModelName("gpt-4o-mini")
-            .withUrl("https://api.gptsapi.net/v1/chat/completions")
+            .withUrl("https://api.openai.com/v1/responses")
             .withContextLength(122880) //120k
             .withTemperature(0.5)
             .withFrequencyPenalty(0)
             .withPresencePenalty(0)
+            .withApiType("RESPONSES")
             .build()),
     GPT_4O_MINI_0718("gpt-4o-mini-2024-07-18", new ModelConfig.Builder()
             .withModelName("gpt-4o-mini-2024-07-18")
-            .withUrl("https://api.gptsapi.net/v1/chat/completions")
-            .withContextLength(10922) //120k
+            .withUrl("https://api.openai.com/v1/responses")
+            .withContextLength(10922)
             .withTemperature(0.5)
             .withFrequencyPenalty(0)
             .withPresencePenalty(0)
+            .withApiType("RESPONSES")
             .build()),
     GPT_5_4("gpt-5.4", new ModelConfig.Builder()
             .withModelName("gpt-5.4")
-            .withUrl("https://api.gptsapi.net/v1/chat/completions")
+            .withUrl("https://api.openai.com/v1/responses")
             .withContextLength(122880) //120k
             .withTemperature(0.5)
             .withFrequencyPenalty(0)
             .withPresencePenalty(0)
+            .withApiType("RESPONSES")
+            .build()),
+    CLAUDE_HAIKU_4_5("claude-haiku-4-5-20251001", new ModelConfig.Builder()
+            .withModelName("claude-haiku-4-5-20251001")
+            .withUrl("https://api.anthropic.com/v1/messages")
+            .withContextLength(200000)
+            .withTemperature(0.5)
+            .withApiType("CLAUDE")
+            .build()),
+    CLAUDE_SONNET_4_6("claude-sonnet-4-6", new ModelConfig.Builder()
+            .withModelName("claude-sonnet-4-6")
+            .withUrl("https://api.anthropic.com/v1/messages")
+            .withContextLength(200000)
+            .withTemperature(0.5)
+            .withApiType("CLAUDE")
+            .build()),
+    CLAUDE_OPUS_4_6("claude-opus-4-6", new ModelConfig.Builder()
+            .withModelName("claude-opus-4-6")
+            .withUrl("https://api.anthropic.com/v1/messages")
+            .withContextLength(200000)
+            .withTemperature(0.5)
+            .withApiType("CLAUDE")
             .build()),
     CODE_LLAMA("code-llama", new ModelConfig.Builder()
             .withModelName("code-llama")
