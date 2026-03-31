@@ -63,7 +63,11 @@ public class AskGPT {
                 }
 
                 response = config.getClient().newCall(requestBuilder.build()).execute();
-                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                if (!response.isSuccessful()) {
+                    String errorBody = response.body() != null ? response.body().string() : "(no body)";
+                    response.close();
+                    throw new IOException("Unexpected code " + response + " | body: " + errorBody);
+                }
                 try {
                     Thread.sleep(config.sleepTime);
                 } catch (InterruptedException ie) {
@@ -103,7 +107,7 @@ public class AskGPT {
         payload.put("temperature", config.getTemperature());
         payload.put("frequency_penalty", config.getFrequencyPenalty());
         payload.put("presence_penalty", config.getPresencePenalty());
-        payload.put("max_tokens", config.getMaxResponseTokens());
+        payload.put("max_completion_tokens", config.getMaxResponseTokens());
         return GSON.toJson(payload);
     }
 
