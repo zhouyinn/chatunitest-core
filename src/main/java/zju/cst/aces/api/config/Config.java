@@ -237,13 +237,22 @@ public class Config {
             return this;
         }
         public ConfigBuilder tmpOutput(Path tmpOutput) {
-            this.tmpOutput = tmpOutput;
+            Path moduleBasedir = project.getBasedir().toPath().toAbsolutePath();
+            // Find the topmost local parent whose basedir contains the module's basedir
+            Project rootProject = project;
             Project parent = project.getParent();
-            while(parent != null && parent.getBasedir() != null) {
-                this.tmpOutput = this.tmpOutput.resolve(parent.getArtifactId());
+            while (parent != null && parent.getBasedir() != null) {
+                Path parentBasedir = parent.getBasedir().toPath().toAbsolutePath();
+                if (moduleBasedir.startsWith(parentBasedir)) {
+                    rootProject = parent;
+                }
                 parent = parent.getParent();
             }
-            this.tmpOutput = this.tmpOutput.resolve(project.getArtifactId());
+            // Build path as: base / rootDirName / relativePathFromRootToModule
+            Path rootBasedir = rootProject.getBasedir().toPath().toAbsolutePath();
+            String rootDirName = rootBasedir.getFileName().toString();
+            Path relativePath = rootBasedir.relativize(moduleBasedir);
+            this.tmpOutput = tmpOutput.resolve(rootDirName).resolve(relativePath);
             this.compileOutputPath = this.tmpOutput.resolve("build");
             this.parseOutput = this.tmpOutput.resolve("class-info");
             this.errorOutput = this.tmpOutput.resolve("error-message");
