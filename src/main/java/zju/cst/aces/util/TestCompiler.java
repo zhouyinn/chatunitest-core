@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.CharBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -62,7 +63,6 @@ public class TestCompiler {
         this.buildBackupFolder = targetPath.resolve("test-classes-backup").toFile();
         this.targetTestsFolder = targetPath.resolve("test-classes").toFile();
         this.classpathElements = classpathElements;
-        ensureBuildFolder();
     }
 
     public TestExecutionSummary executeTest(String fullTestName) {
@@ -117,6 +117,7 @@ public class TestCompiler {
         this.testName = className;
         boolean result;
         try {
+            ensureBuildFolder();
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
                 outputPath.toAbsolutePath().getParent().toFile().mkdirs();
             }
@@ -262,8 +263,10 @@ public class TestCompiler {
     }
 
     private void ensureBuildFolder() {
-        if (!buildFolder.exists() && !buildFolder.mkdirs()) {
-            throw new IllegalStateException("Cannot create build directory: " + buildFolder.getAbsolutePath());
+        try {
+            Files.createDirectories(buildFolder.toPath());
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create build directory: " + buildFolder.getAbsolutePath(), e);
         }
     }
 }
