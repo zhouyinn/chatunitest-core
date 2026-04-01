@@ -137,7 +137,7 @@ public class CallGraph extends DirectedPseudograph<CallGraph.Vertex, CallGraph.E
         try {
             Edge<?> edge = new Edge<>(call, findGraphNode(call, source));
             return addEdge(findVertexByDeclaration(source), findVertexByDeclaration(target), edge);
-        } catch (Exception e) {
+        } catch (Exception | StackOverflowError e) {
             // Failed to create edge, just ignore
             return false;
         }
@@ -198,7 +198,7 @@ public class CallGraph extends DirectedPseudograph<CallGraph.Vertex, CallGraph.E
                     } else {
                         n.resolve().toAst().ifPresent(decl -> createPolyEdges(decl, n));
                     }
-                } catch (RuntimeException ignored) {}
+                } catch (RuntimeException | StackOverflowError ignored) {}
                 super.visit(n, arg);
             }
 
@@ -213,7 +213,7 @@ public class CallGraph extends DirectedPseudograph<CallGraph.Vertex, CallGraph.E
                     } else {
                         n.resolve().toAst().ifPresent(decl -> createNormalEdge(decl, n));
                     }
-                } catch (RuntimeException ignored) {}
+                } catch (RuntimeException | StackOverflowError ignored) {}
                 super.visit(n, arg);
             }
 
@@ -221,7 +221,7 @@ public class CallGraph extends DirectedPseudograph<CallGraph.Vertex, CallGraph.E
             public void visit(ExplicitConstructorInvocationStmt n, Void arg) {
                 try {
                     n.resolve().toAst().ifPresent(decl -> createNormalEdge(decl, n));
-                } catch (RuntimeException ignored) {}
+                } catch (RuntimeException | StackOverflowError ignored) {}
                 super.visit(n, arg);
             }
 
@@ -267,7 +267,7 @@ public class CallGraph extends DirectedPseudograph<CallGraph.Vertex, CallGraph.E
                                 createNormalEdge(methodDecl, call);
                             });
                     assert edgesCreated.get() > 0;
-                } catch (Exception e) {
+                } catch (Exception | StackOverflowError e) {
                     // Failed to create edge, just ignore
                     return;
                 }

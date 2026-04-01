@@ -157,7 +157,7 @@ public class ASTUtils {
     public static boolean shouldVisitArgumentsForMethodCalls(Resolvable<? extends ResolvedMethodLikeDeclaration> call) {
         try {
             return !getResolvedAST(call.resolve()).isPresent();
-        } catch (Exception e) {
+        } catch (Exception | StackOverflowError e) {
             return false;
         }
     }

@@ -755,7 +755,7 @@ public class ClassParser {
                     String dependentType = p.resolve().describeType();
                     dependentMethods.put(dependentType, new HashSet<String>());
                 }
-            } catch (Exception e) {
+            } catch (Exception | StackOverflowError e) {
 
             }
         }
@@ -770,7 +770,7 @@ public class ClassParser {
                 }
                 invocations.add(mSig);
                 dependentMethods.put(dependentType, invocations);
-            } catch (Exception e) {
+            } catch (Exception | StackOverflowError e) {
 //                logger.warn("Cannot resolve method call: " + m.getNameAsString() + " in: " + node.getNameAsString());
             }
         }
@@ -990,7 +990,7 @@ public class ClassParser {
                 }
                 ocm.add(typeName, classInfo.className, node.getNameAsString(), expr.getBegin().get().line, sb.toString());
 
-            } catch (Exception e) {
+            } catch (Exception | StackOverflowError e) {
                 logger.warn("Cannot resolve expression : " + expr + "\n" + e.getMessage());
             }
         }
@@ -1039,7 +1039,7 @@ public class ClassParser {
                 }
                 ocm.add(typeName, classInfo.className, node.getNameAsString(), expr.getBegin().get().line, sb.toString());
 
-            } catch (Exception e) {
+            } catch (Exception | StackOverflowError e) {
                 logger.warn("Cannot resolve expression : " + expr + "\n" + e.getMessage());
             }
         }
