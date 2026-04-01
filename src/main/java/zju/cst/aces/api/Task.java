@@ -419,6 +419,12 @@ public class Task {
     }
 
     public static String getFullClassName(Config config, String name) throws IOException {
+        if (config.module != null && !config.module.isEmpty()) {
+            String moduleSlash = config.module + "/";
+            if (name.contains(moduleSlash)) {
+                name = name.substring(name.indexOf(moduleSlash) + moduleSlash.length());
+            }
+        }
         if (isFullName(name)) {
             return name;
         }
