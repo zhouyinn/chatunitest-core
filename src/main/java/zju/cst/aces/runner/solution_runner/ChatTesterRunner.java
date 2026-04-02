@@ -135,6 +135,9 @@ public class ChatTesterRunner extends MethodRunner {
                             continue;
                         }
                         ClassInfo typeInfo = AbstractRunner.getClassInfo(config, methodType);
+                        if (typeInfo == null) {
+                            continue;
+                        }
                         deps.append("// ").append(methodType).append(" class\n");
                         deps.append(typeInfo.getClassSignature()).append("{\n");
                         MethodInfo depInfo = null;
