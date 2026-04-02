@@ -44,10 +44,10 @@ public class TestCompiler {
     public static String OS = System.getProperty("os.name").toLowerCase();
     public static File srcTestFolder = new File("src" + File.separator + "test" + File.separator + "java");
     public static File testBackupFolder = new File("src" + File.separator + "backup");
-    public static File testOutputFolder;
-    public static File buildFolder;
-    public static File targetTestsFolder;
-    public static File buildBackupFolder;
+    public File testOutputFolder;
+    public File buildFolder;
+    public File targetTestsFolder;
+    public File buildBackupFolder;
     public List<String> classpathElements;
     public String testName;
     public String fullTestName;
