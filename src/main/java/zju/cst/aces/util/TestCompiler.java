@@ -111,7 +111,7 @@ public class TestCompiler {
      * Compile test file
      */
     public boolean compileTest(String className, Path outputPath, PromptInfo promptInfo) {
-        if (this.code == "") {
+        if (this.code.isEmpty()) {
             throw new RuntimeException("In TestCompiler.compileTest: code is empty");
         }
         this.testName = className;
@@ -121,38 +121,42 @@ public class TestCompiler {
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
                 outputPath.toAbsolutePath().getParent().toFile().mkdirs();
             }
-            
+
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-            StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+            if (compiler == null) {
+                throw new IllegalStateException("JavaCompiler not available - ensure a JDK (not JRE) is used");
+            }
+            try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
+                fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singletonList(buildFolder));
 
-            SimpleJavaFileObject sourceJavaFileObject = new SimpleJavaFileObject(URI.create(className + ".java"),
-                    JavaFileObject.Kind.SOURCE){
-                public CharBuffer getCharContent(boolean b) {
-                    return CharBuffer.wrap(code);
+                SimpleJavaFileObject sourceJavaFileObject = new SimpleJavaFileObject(URI.create(className + ".java"),
+                        JavaFileObject.Kind.SOURCE){
+                    public CharBuffer getCharContent(boolean b) {
+                        return CharBuffer.wrap(code);
+                    }
+                };
+
+                Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(sourceJavaFileObject);
+                Iterable<String> options = Arrays.asList("-classpath", String.join(this.OS.contains("win") ? ";" : ":", this.classpathElements));
+
+                DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+                JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+
+                result = task.call();
+                if (!result && promptInfo != null) {
+                    TestMessage testMessage = new TestMessage();
+                    List<String> errors = new ArrayList<>();
+                    diagnostics.getDiagnostics().forEach(diagnostic -> {
+                        errors.add("Error in " + testName +
+                                ": line " + diagnostic.getLineNumber() + " : "
+                                + diagnostic.getMessage(null));
+                    });
+                    testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
+                    testMessage.setErrorMessage(errors);
+                    promptInfo.setErrorMsg(testMessage);
+
+                    exportError(errors, outputPath);
                 }
-            };
-
-            Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
-            Iterable<String> options = Arrays.asList("-classpath", String.join(this.OS.contains("win") ? ";" : ":", this.classpathElements),
-                    "-d", buildFolder.toPath().toString());
-
-            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
-
-            result = task.call();
-            if (!result && promptInfo != null) {
-                TestMessage testMessage = new TestMessage();
-                List<String> errors = new ArrayList<>();
-                diagnostics.getDiagnostics().forEach(diagnostic -> {
-                    errors.add("Error in " + testName +
-                            ": line " + diagnostic.getLineNumber() + " : "
-                            + diagnostic.getMessage(null));
-                });
-                testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
-                testMessage.setErrorMessage(errors);
-                promptInfo.setErrorMsg(testMessage);
-
-                exportError(errors, outputPath);
             }
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileTest: " + e);
