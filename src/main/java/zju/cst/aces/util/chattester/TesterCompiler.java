@@ -11,6 +11,7 @@ import zju.cst.aces.util.TestCompiler;
 import javax.tools.*;
 import java.net.URI;
 import java.nio.CharBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,42 +32,44 @@ public class TesterCompiler extends TestCompiler {
         this.testName = className;
         boolean result;
         try {
-            if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
-                outputPath.toAbsolutePath().getParent().toFile().mkdirs();
-            }
+            ensureBuildFolder();
+            Files.createDirectories(outputPath.toAbsolutePath().getParent());
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-            StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
+            if (compiler == null) {
+                throw new IllegalStateException("JavaCompiler not available - ensure a JDK (not JRE) is used");
+            }
+            try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
+                SimpleJavaFileObject sourceJavaFileObject = new SimpleJavaFileObject(URI.create(className + ".java"),
+                        JavaFileObject.Kind.SOURCE){
+                    public CharBuffer getCharContent(boolean b) {
+                        return CharBuffer.wrap(code);
+                    }
+                };
 
-            SimpleJavaFileObject sourceJavaFileObject = new SimpleJavaFileObject(URI.create(className + ".java"),
-                    JavaFileObject.Kind.SOURCE){
-                public CharBuffer getCharContent(boolean b) {
-                    return CharBuffer.wrap(code);
+                Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
+                Iterable<String> options = Arrays.asList("-classpath", String.join(OS.contains("win") ? ";" : ":", this.classpathElements),
+                        "-d", buildFolder.toPath().toString());
+
+                DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+                JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+
+                result = task.call();
+                if (!result && promptInfo != null) {
+                    TestMessage testMessage = new TestMessage();
+                    List<String> errors = new ArrayList<>();
+                    diagnostics.getDiagnostics().forEach(diagnostic -> {
+                        errors.add("Error in " + testName +
+                                ": line " + diagnostic.getLineNumber() + " : "
+                                + diagnostic.getMessage(null));
+                        promptInfo.setUnitTest(addBuggyPrompt(promptInfo.getUnitTest(),"<Buggy Line>: " + diagnostic.getMessage(null), (int) diagnostic.getLineNumber()));
+                    });
+                    promptInfo.setUnitTest(promptInfo.getUnitTest().replace("//<Buggy Line>", "<Buggy Line>"));
+                    testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
+                    testMessage.setErrorMessage(errors);
+                    promptInfo.setErrorMsg(testMessage);
+
+                    exportError(errors, outputPath);
                 }
-            };
-
-            Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
-            Iterable<String> options = Arrays.asList("-classpath", String.join(OS.contains("win") ? ";" : ":", this.classpathElements),
-                    "-d", buildFolder.toPath().toString());
-
-            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
-
-            result = task.call();
-            if (!result && promptInfo != null) {
-                TestMessage testMessage = new TestMessage();
-                List<String> errors = new ArrayList<>();
-                diagnostics.getDiagnostics().forEach(diagnostic -> {
-                    errors.add("Error in " + testName +
-                            ": line " + diagnostic.getLineNumber() + " : "
-                            + diagnostic.getMessage(null));
-                    promptInfo.setUnitTest(addBuggyPrompt(promptInfo.getUnitTest(),"<Buggy Line>: " + diagnostic.getMessage(null), (int) diagnostic.getLineNumber()));
-                });
-                promptInfo.setUnitTest(promptInfo.getUnitTest().replace("//<Buggy Line>", "<Buggy Line>"));
-                testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
-                testMessage.setErrorMessage(errors);
-                promptInfo.setErrorMsg(testMessage);
-
-                exportError(errors, outputPath);
             }
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileTest: " + e);

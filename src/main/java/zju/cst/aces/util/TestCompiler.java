@@ -96,7 +96,6 @@ public class TestCompiler {
         @Override
         public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
             super.executionFinished(testIdentifier, testExecutionResult);
-            // 在这里，你可以记录更多关于失败的详细信息或者执行额外的错误处理逻辑
             System.err.println("测试失败: " + testIdentifier.getDisplayName() + ", 错误: " );
         }
     }
@@ -112,15 +111,7 @@ public class TestCompiler {
         boolean result;
         try {
             ensureBuildFolder();
-            if (!buildFolder.exists() || !buildFolder.isDirectory()) {
-                throw new RuntimeException(
-                        "In TestCompiler.compileTest: build folder does not exist after creation attempt: "
-                                + buildFolder.getAbsolutePath());
-            }
-
-            if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
-                outputPath.toAbsolutePath().getParent().toFile().mkdirs();
-            }
+            Files.createDirectories(outputPath.toAbsolutePath().getParent());
 
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
             if (compiler == null) {
@@ -265,13 +256,9 @@ public class TestCompiler {
         }
     }
 
-    private void ensureBuildFolder() {
+    protected void ensureBuildFolder() {
         try {
             Files.createDirectories(buildFolder.toPath());
-            if (!buildFolder.exists() || !buildFolder.isDirectory()) {
-                throw new IllegalStateException(
-                        "Build directory was not created: " + buildFolder.getAbsolutePath());
-            }
         } catch (IOException e) {
             throw new IllegalStateException(
                     "Cannot create build directory: " + buildFolder.getAbsolutePath(), e);
