@@ -7,12 +7,10 @@ import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.FileUtils;
-import org.junit.platform.engine.TestEngine;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -74,7 +72,6 @@ public class TestCompiler {
                 urls.add(url);
             }
             urls.add(this.buildFolder.toURI().toURL());
-//            urls.add(targetTestsFolder.toURI().toURL());
 
             ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
 
@@ -84,20 +81,17 @@ public class TestCompiler {
 
             Launcher launcher = LauncherFactory.create();
 
-            // Register a listener to collect test execution results.
             SummaryGeneratingListener listener = new SummaryGeneratingListener();
             launcher.registerTestExecutionListeners(listener);
 
             launcher.execute(request);
 
-            TestExecutionSummary summary = listener.getSummary();
-            return summary;
+            return listener.getSummary();
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.executeTest: " + e);
         }
     }
 
-    // 实现自定义监听器以捕获更详细的测试执行信息
     public class DetailedTestExecutionListener extends SummaryGeneratingListener {
         @Override
         public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
@@ -118,6 +112,12 @@ public class TestCompiler {
         boolean result;
         try {
             ensureBuildFolder();
+            if (!buildFolder.exists() || !buildFolder.isDirectory()) {
+                throw new RuntimeException(
+                        "In TestCompiler.compileTest: build folder does not exist after creation attempt: "
+                                + buildFolder.getAbsolutePath());
+            }
+
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
                 outputPath.toAbsolutePath().getParent().toFile().mkdirs();
             }
@@ -154,7 +154,6 @@ public class TestCompiler {
                     testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
                     testMessage.setErrorMessage(errors);
                     promptInfo.setErrorMsg(testMessage);
-
                     exportError(errors, outputPath);
                 }
             }
@@ -269,8 +268,13 @@ public class TestCompiler {
     private void ensureBuildFolder() {
         try {
             Files.createDirectories(buildFolder.toPath());
+            if (!buildFolder.exists() || !buildFolder.isDirectory()) {
+                throw new IllegalStateException(
+                        "Build directory was not created: " + buildFolder.getAbsolutePath());
+            }
         } catch (IOException e) {
-            throw new IllegalStateException("Cannot create build directory: " + buildFolder.getAbsolutePath(), e);
+            throw new IllegalStateException(
+                    "Cannot create build directory: " + buildFolder.getAbsolutePath(), e);
         }
     }
 }
