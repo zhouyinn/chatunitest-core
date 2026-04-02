@@ -131,7 +131,7 @@ public class ChatTesterRunner extends MethodRunner {
                     }
                     for (String methodName : methodInError.keySet()) {
                         String methodType = methodInError.get(methodName);
-                        if (deps.toString().contains(methodType)) {
+                        if (methodType == null || deps.toString().contains(methodType)) {
                             continue;
                         }
                         ClassInfo typeInfo = AbstractRunner.getClassInfo(config, methodType);
