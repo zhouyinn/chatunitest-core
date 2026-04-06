@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.CharBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -121,11 +122,9 @@ public class TestCompiler {
         this.testName = className;
         boolean result;
         try {
+            ensureBuildFolder();
             if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
                 outputPath.toAbsolutePath().getParent().toFile().mkdirs();
-            }
-            if(!buildFolder.exists()){
-                buildFolder.mkdirs();
             }
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
             StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
@@ -204,6 +203,14 @@ public class TestCompiler {
             System.out.println(e);
         }
         return classPaths;
+    }
+
+    protected void ensureBuildFolder() {
+        try {
+            Files.createDirectories(buildFolder.toPath());
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create build directory: " + buildFolder.getAbsolutePath(), e);
+        }
     }
 
     /**
