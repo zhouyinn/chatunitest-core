@@ -7,10 +7,12 @@ import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.FileUtils;
+import org.junit.platform.engine.TestEngine;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -29,7 +31,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.CharBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -52,7 +53,12 @@ public class TestCompiler {
     public String code;
 
     public TestCompiler(Path testOutputPath, Path compileOutputPath, Path targetPath, List<String> classpathElements) {
-        this("", testOutputPath, compileOutputPath, targetPath, classpathElements);
+        this.code = "";
+        this.testOutputFolder = testOutputPath.toFile();
+        this.buildFolder = compileOutputPath.toFile();
+        this.buildBackupFolder = targetPath.resolve("test-classes-backup").toFile();
+        this.targetTestsFolder = targetPath.resolve("test-classes").toFile();
+        this.classpathElements = classpathElements;
     }
     public TestCompiler(String code, Path testOutputPath, Path compileOutputPath, Path targetPath, List<String> classpathElements) {
         this.code = code;
@@ -72,6 +78,7 @@ public class TestCompiler {
                 urls.add(url);
             }
             urls.add(this.buildFolder.toURI().toURL());
+//            urls.add(targetTestsFolder.toURI().toURL());
 
             ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
 
@@ -81,21 +88,25 @@ public class TestCompiler {
 
             Launcher launcher = LauncherFactory.create();
 
+            // Register a listener to collect test execution results.
             SummaryGeneratingListener listener = new SummaryGeneratingListener();
             launcher.registerTestExecutionListeners(listener);
 
             launcher.execute(request);
 
-            return listener.getSummary();
+            TestExecutionSummary summary = listener.getSummary();
+            return summary;
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.executeTest: " + e);
         }
     }
 
+    // 实现自定义监听器以捕获更详细的测试执行信息
     public class DetailedTestExecutionListener extends SummaryGeneratingListener {
         @Override
         public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
             super.executionFinished(testIdentifier, testExecutionResult);
+            // 在这里，你可以记录更多关于失败的详细信息或者执行额外的错误处理逻辑
             System.err.println("测试失败: " + testIdentifier.getDisplayName() + ", 错误: " );
         }
     }
@@ -104,47 +115,49 @@ public class TestCompiler {
      * Compile test file
      */
     public boolean compileTest(String className, Path outputPath, PromptInfo promptInfo) {
-        if (this.code.isEmpty()) {
+        if (this.code == "") {
             throw new RuntimeException("In TestCompiler.compileTest: code is empty");
         }
         this.testName = className;
         boolean result;
         try {
-            ensureBuildFolder();
-            Files.createDirectories(outputPath.toAbsolutePath().getParent());
-
-            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-            if (compiler == null) {
-                throw new IllegalStateException("JavaCompiler not available - ensure a JDK (not JRE) is used");
+            if (!outputPath.toAbsolutePath().getParent().toFile().exists()) {
+                outputPath.toAbsolutePath().getParent().toFile().mkdirs();
             }
-            try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
-                SimpleJavaFileObject sourceJavaFileObject = new SimpleJavaFileObject(URI.create(className + ".java"),
-                        JavaFileObject.Kind.SOURCE){
-                    public CharBuffer getCharContent(boolean b) {
-                        return CharBuffer.wrap(code);
-                    }
-                };
+            if(!buildFolder.exists()){
+                buildFolder.mkdirs();
+            }
+            JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+            StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 
-                Iterable<? extends JavaFileObject> compilationUnits = Collections.singletonList(sourceJavaFileObject);
-                Iterable<String> options = Arrays.asList("-classpath", String.join(this.OS.contains("win") ? ";" : ":", this.classpathElements),
-                        "-d", buildFolder.toPath().toString());
-
-                DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-                JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
-                result = task.call();
-                if (!result && promptInfo != null) {
-                    TestMessage testMessage = new TestMessage();
-                    List<String> errors = new ArrayList<>();
-                    diagnostics.getDiagnostics().forEach(diagnostic -> {
-                        errors.add("Error in " + testName +
-                                ": line " + diagnostic.getLineNumber() + " : "
-                                + diagnostic.getMessage(null));
-                    });
-                    testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
-                    testMessage.setErrorMessage(errors);
-                    promptInfo.setErrorMsg(testMessage);
-                    exportError(errors, outputPath);
+            SimpleJavaFileObject sourceJavaFileObject = new SimpleJavaFileObject(URI.create(className + ".java"),
+                    JavaFileObject.Kind.SOURCE){
+                public CharBuffer getCharContent(boolean b) {
+                    return CharBuffer.wrap(code);
                 }
+            };
+
+            Iterable<? extends JavaFileObject> compilationUnits = Arrays.asList(sourceJavaFileObject);
+            Iterable<String> options = Arrays.asList("-classpath", String.join(this.OS.contains("win") ? ";" : ":", this.classpathElements),
+                    "-d", buildFolder.toPath().toString());
+
+            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+
+            result = task.call();
+            if (!result && promptInfo != null) {
+                TestMessage testMessage = new TestMessage();
+                List<String> errors = new ArrayList<>();
+                diagnostics.getDiagnostics().forEach(diagnostic -> {
+                    errors.add("Error in " + testName +
+                            ": line " + diagnostic.getLineNumber() + " : "
+                            + diagnostic.getMessage(null));
+                });
+                testMessage.setErrorType(TestMessage.ErrorType.COMPILE_ERROR);
+                testMessage.setErrorMessage(errors);
+                promptInfo.setErrorMsg(testMessage);
+
+                exportError(errors, outputPath);
             }
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.compileTest: " + e);
@@ -251,15 +264,6 @@ public class TestCompiler {
             } catch (IOException e) {
                 throw new RuntimeException("In TestCompiler.restoreTestFolder: " + e);
             }
-        }
-    }
-
-    protected void ensureBuildFolder() {
-        try {
-            Files.createDirectories(buildFolder.toPath());
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                    "Cannot create build directory: " + buildFolder.getAbsolutePath(), e);
         }
     }
 }
