@@ -122,7 +122,10 @@ public class ChatTesterRunner extends MethodRunner {
                     StringBuilder deps = new StringBuilder();
 
                     for (String className : classInError) {
-                        ClassInfo depInfo = AbstractRunner.getClassInfo(config, className);
+                        // If the simple name matches the focal class, use the known FQN directly
+                        // to avoid ambiguous lookup when multiple classes share the same simple name
+                        String resolvedClassName = this.className.equals(className) ? this.fullClassName : className;
+                        ClassInfo depInfo = AbstractRunner.getClassInfo(config, resolvedClassName);
                         if (depInfo != null) {
                             deps.append("// ").append(className).append(" class\n");
                             deps.append(depInfo.getClassSignature()).append("{\n");

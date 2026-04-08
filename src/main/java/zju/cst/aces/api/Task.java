@@ -432,8 +432,9 @@ public class Task {
         Map<String, List<String>> classMap = config.getGSON().fromJson(new String(Files.readAllBytes(classMapPath), StandardCharsets.UTF_8), Map.class);
         if (classMap.containsKey(name)) {
             if (classMap.get(name).size() > 1) {
-                throw new RuntimeException((String.format("[%s] Multiple classes Named ",config.pluginSign)) + name + ": " + classMap.get(name)
-                        + " Please use full qualified name!");
+                config.getLogger().warn((String.format("[%s] Multiple classes Named ", config.pluginSign)) + name + ": " + classMap.get(name)
+                        + " Please use full qualified name! Skipping.");
+                return null;
             }
             return classMap.get(name).get(0);
         }
