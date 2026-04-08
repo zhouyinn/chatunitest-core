@@ -11,6 +11,7 @@ import org.junit.platform.engine.TestEngine;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
@@ -81,22 +82,16 @@ public class TestCompiler {
             urls.add(this.buildFolder.toURI().toURL());
 //            urls.add(targetTestsFolder.toURI().toURL());
 
-            ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
-
-            LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                    .selectors(selectClass(classLoader.loadClass(fullTestName)))
-                    .build();
-
-            Launcher launcher = LauncherFactory.create();
-
-            // Register a listener to collect test execution results.
             SummaryGeneratingListener listener = new SummaryGeneratingListener();
-            launcher.registerTestExecutionListeners(listener);
-
-            launcher.execute(request);
-
-            TestExecutionSummary summary = listener.getSummary();
-            return summary;
+            try (URLClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
+                 LauncherSession session = LauncherFactory.openSession()) {
+                LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                        .selectors(selectClass(classLoader.loadClass(fullTestName)))
+                        .build();
+                session.getLauncher().registerTestExecutionListeners(listener);
+                session.getLauncher().execute(request);
+            }
+            return listener.getSummary();
         } catch (Exception e) {
             throw new RuntimeException("In TestCompiler.executeTest: " + e);
         }
