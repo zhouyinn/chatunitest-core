@@ -3,6 +3,7 @@ package zju.cst.aces.util.chattester;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.LineComment;
 import zju.cst.aces.dto.PromptInfo;
 import zju.cst.aces.dto.TestMessage;
@@ -81,6 +82,7 @@ public class TesterCompiler extends TestCompiler {
         CompilationUnit cu = StaticJavaParser.parse(code);
 
         Optional<Node> firstNodeAfterLine = cu.findFirst(Node.class, node ->
+                !(node instanceof Comment) &&
                 node.getBegin().isPresent() && node.getBegin().get().line >= lineNum);
 
         firstNodeAfterLine.ifPresent(node -> {

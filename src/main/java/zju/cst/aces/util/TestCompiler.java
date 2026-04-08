@@ -7,13 +7,9 @@ import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
 import org.apache.maven.shared.dependency.graph.DependencyNode;
 import org.codehaus.plexus.util.FileUtils;
-import org.junit.platform.engine.TestEngine;
-import org.junit.platform.engine.TestExecutionResult;
-import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -83,13 +79,31 @@ public class TestCompiler {
 //            urls.add(targetTestsFolder.toURI().toURL());
 
             SummaryGeneratingListener listener = new SummaryGeneratingListener();
-            try (URLClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader());
-                 LauncherSession session = LauncherFactory.openSession()) {
+            // Subclass URLClassLoader so that service-file lookups (META-INF/services/*)
+            // only scan our clean project JARs and never delegate to Maven's plugin
+            // classloader, which may contain corrupt JARs that cause ZipException inside
+            // ServiceLoader when LauncherFactory discovers TestEngine implementations.
+            try (URLClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[0]), getClass().getClassLoader()) {
+                @Override
+                public Enumeration<URL> getResources(String name) throws IOException {
+                    if (name.startsWith("META-INF/services/")) {
+                        return findResources(name);
+                    }
+                    return super.getResources(name);
+                }
+            }) {
                 LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
                         .selectors(selectClass(classLoader.loadClass(fullTestName)))
                         .build();
-                session.getLauncher().registerTestExecutionListeners(listener);
-                session.getLauncher().execute(request);
+                Thread currentThread = Thread.currentThread();
+                ClassLoader savedCtx = currentThread.getContextClassLoader();
+                currentThread.setContextClassLoader(classLoader);
+                try (LauncherSession session = LauncherFactory.openSession()) {
+                    session.getLauncher().registerTestExecutionListeners(listener);
+                    session.getLauncher().execute(request);
+                } finally {
+                    currentThread.setContextClassLoader(savedCtx);
+                }
             }
             return listener.getSummary();
         } catch (Exception e) {
