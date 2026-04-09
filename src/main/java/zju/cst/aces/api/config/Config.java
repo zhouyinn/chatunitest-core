@@ -134,7 +134,7 @@ public class Config {
         public int testNumber = 5;
         public int maxRounds = 5;
         public int maxPromptTokens = 2600;
-        public int maxResponseTokens = 1024;
+        public int maxResponseTokens = 4096;
         public int minErrorTokens = 500;
         public int sleepTime = 0;
         public int dependencyDepth = 1;
@@ -191,7 +191,7 @@ public class Config {
             this.properties("config.properties");
 
             this.maxPromptTokens = this.model.getDefaultConfig().getContextLength() * 2 / 3;
-            this.maxResponseTokens = 1024;
+            this.maxResponseTokens = 4096;
             this.minErrorTokens = this.maxPromptTokens * 1 / 3 - this.maxResponseTokens;
             if (this.minErrorTokens < 0) {
                 this.minErrorTokens = 512;
@@ -453,7 +453,7 @@ public class Config {
         public ConfigBuilder model(String model) {
             this.model = Model.fromString(model);
             this.maxPromptTokens = this.model.getDefaultConfig().getContextLength() * 2 / 3;
-            this.maxResponseTokens = 1024;
+            this.maxResponseTokens = 4096;
             this.minErrorTokens = this.maxPromptTokens * 1 / 2 - this.maxResponseTokens;
             if (this.minErrorTokens < 0) {
                 this.minErrorTokens = 512;

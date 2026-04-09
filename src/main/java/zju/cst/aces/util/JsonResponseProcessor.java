@@ -69,9 +69,18 @@ public class JsonResponseProcessor {
      * @return The extracted JSON string or null if no JSON content is found.
      */
     public static String getJsonContentByResponse(String response) {
+        if (response == null) {
+            return null;
+        }
         Matcher matcher = JSON_PATTERN.matcher(response);
         if (matcher.find()) {
             return matcher.group(1).trim();
+        }
+        // Fallback: response is raw JSON without code fences
+        int start = response.indexOf('{');
+        int end = response.lastIndexOf('}');
+        if (start != -1 && end > start) {
+            return response.substring(start, end + 1).trim();
         }
         return null;
     }
