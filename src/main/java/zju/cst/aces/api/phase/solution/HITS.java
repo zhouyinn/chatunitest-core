@@ -143,7 +143,7 @@ public class HITS extends PhaseImpl {
             Path fullDirectoryPath = config.tmpOutput.resolve(slicePath); //todo 每次初始生成需要将文件夹清空
 
             ChatResponse response = ChatGenerator.chat(config, prompt);
-            String content = JsonResponseProcessor.getJsonContentByResponse(response.toString()); //todo get slice json result
+            String content = JsonResponseProcessor.getJsonContentByResponse(ChatGenerator.getContentByResponse(response));
             config.getLogger().debug("[Response]:\n" + content);
 
             boolean success = true;
@@ -169,7 +169,7 @@ public class HITS extends PhaseImpl {
                 for (int i = 0; i < 3; i++) { // todo 这里暂定3次，可以在config中设置
                     try {
                         response = ChatGenerator.chat(config, prompt);
-                        content = JsonResponseProcessor.getJsonContentByResponse(response.toString());
+                        content = JsonResponseProcessor.getJsonContentByResponse(ChatGenerator.getContentByResponse(response));
                         if (content != null) {
                             JsonResponseProcessor.JsonData info = JsonResponseProcessor.extractInfoFromJson(content);
                             if (info != null) {
