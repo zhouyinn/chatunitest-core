@@ -281,6 +281,9 @@ public abstract class AbstractRunner {
     public static ClassInfo getClassInfo(Config config, String className) throws IOException {
         try {
             String fullClassName = Task.getFullClassName(config, className);
+            if (fullClassName == null) {
+                return null;
+            }
             Path classInfoPath = config.getParseOutput().resolve(fullClassName.replace(".", File.separator)).resolve("class.json");
             if (!classInfoPath.toFile().exists()) {
                 return null;
