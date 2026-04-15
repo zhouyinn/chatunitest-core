@@ -551,48 +551,36 @@ public abstract class AbstractRunner {
         boolean compileSuccess = false;
         //execution error
         if (summary.getTestsFailedCount() > 0 || summary.getTestsSucceededCount() == 0) {
-            if (config.isEnablePrune() || !isOnlyAssertionError(errors)) {
-                String testProcessed = testProcessor.removeErrorTest(promptInfo, summary);
-                // Remove errors successfully, recompile and re-execute test
-                if (testProcessed != null) {
-                    config.getLogger().debug("[Original Test]:\n" + code);
-                    if (config.getValidator().semanticValidate(testProcessed, testName, compilationErrorPath, null)) {
-                        compileSuccess=true;
-                        if (config.getValidator().runtimeValidate(fullTestName)) {
-                            exportTest(testProcessed, savePath);
-                            config.getLogger().debug("[Processed Test]:\n" + testProcessed);
-                            config.getLogger().info("Processed test for method < " + promptInfo.getMethodInfo().getMethodName() + " > generated successfully round " + rounds);
-                            return true;
-                        }
+            String testProcessed = testProcessor.removeErrorTest(promptInfo, summary);
+            // Remove errors successfully, recompile and re-execute test
+            if (testProcessed != null) {
+                config.getLogger().debug("[Original Test]:\n" + code);
+                if (config.getValidator().semanticValidate(testProcessed, testName, compilationErrorPath, null)) {
+                    compileSuccess=true;
+                    if (config.getValidator().runtimeValidate(fullTestName)) {
+                        exportTest(testProcessed, savePath);
+                        config.getLogger().debug("[Processed Test]:\n" + testProcessed);
+                        config.getLogger().info("Processed test for method < " + promptInfo.getMethodInfo().getMethodName() + " > generated successfully round " + rounds);
+                        return true;
                     }
-                    testProcessor.removeCorrectTest(promptInfo, summary);
                 }
-                // Set promptInfo error message
-                TestMessage testMessage = new TestMessage();
-                testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
-                testMessage.setErrorMessage(errors);
-                promptInfo.setErrorMsg(testMessage);
-                exportError(code, errors, executionErrorPath);
                 testProcessor.removeCorrectTest(promptInfo, summary);
-                config.getLogger().info("Test for method < " + promptInfo.getMethodInfo().getMethodName() + " > execution failed round " + rounds);
-                return false;
             }
+            // Set promptInfo error message
+            TestMessage testMessage = new TestMessage();
+            testMessage.setErrorType(TestMessage.ErrorType.RUNTIME_ERROR);
+            testMessage.setErrorMessage(errors);
+            promptInfo.setErrorMsg(testMessage);
+            exportError(code, errors, executionErrorPath);
+            testProcessor.removeCorrectTest(promptInfo, summary);
+            config.getLogger().info("Test for method < " + promptInfo.getMethodInfo().getMethodName() + " > execution failed round " + rounds);
+            return false;
         }
         summary.printTo(new PrintWriter(System.out));
         if(!config.phaseType.equals("COVERUP")){
             exportTest(code, savePath);
         }
         config.getLogger().info("Test for method < " + promptInfo.getMethodInfo().getMethodName() + " > compile and execute successfully round " + rounds);
-        return true;
-    }
-
-    public static boolean isOnlyAssertionError(List<String> errors) {
-        for (String error : errors) {
-            if (!error.toLowerCase().contains("AssertionError".toLowerCase())
-                    && !error.toLowerCase().contains("AssertionFailed".toLowerCase())) {
-                return false;
-            }
-        }
         return true;
     }
 
